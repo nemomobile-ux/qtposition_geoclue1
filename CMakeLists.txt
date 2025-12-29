@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.16)
 project(qtposition_geoclue LANGUAGES CXX)
 
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)
 
 set(name qtposition_geoclue)
 set(CMAKE_CXX_STANDARD 17)
@@ -54,6 +57,7 @@ qt_add_dbus_interface(SOURCES "${DBUS_DIR}/org.freedesktop.Geoclue.Velocity.xml"
 add_library(${name} SHARED
     ${SOURCES}
     ${HEADERS}
+    plugin.json
 )
 
 target_include_directories(${name} PRIVATE
