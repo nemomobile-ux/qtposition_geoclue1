@@ -1,0 +1,8 @@
+*.o
+*.so
+moc_*
+*.moc
+Makefile
+.qmake.stash
+build/
+*user
