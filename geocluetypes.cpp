@@ -41,7 +41,18 @@
 #include <qt6/QtCore/qtconfigmacros.h>
 #include <qt6/QtCore/qtypes.h>
 
-const QDBusArgument &dbus_argument_helper(const QDBusArgument &arg, Accuracy &accuracy)
+struct AccuracyInitializer {
+    AccuracyInitializer()
+    {
+        qDBusRegisterMetaType<Accuracy>();
+        qDBusRegisterMetaType<QGeoSatelliteInfo>();
+        qDBusRegisterMetaType<QList<QGeoSatelliteInfo>>();
+    }
+};
+
+static AccuracyInitializer _accuracyInitializer;
+
+const QDBusArgument& dbus_argument_helper(const QDBusArgument& arg, Accuracy& accuracy)
 {
     arg.beginStructure();
     qint32 level;
@@ -56,7 +67,7 @@ const QDBusArgument &dbus_argument_helper(const QDBusArgument &arg, Accuracy &ac
 
 QT_BEGIN_NAMESPACE
 
-QDBusArgument &operator<<(QDBusArgument &arg, const Accuracy &accuracy)
+QDBusArgument& operator<<(QDBusArgument& arg, const Accuracy& accuracy)
 {
     arg.beginStructure();
     arg << qint32(accuracy.level());
@@ -67,12 +78,12 @@ QDBusArgument &operator<<(QDBusArgument &arg, const Accuracy &accuracy)
     return arg;
 }
 
-const QDBusArgument &operator>>(const QDBusArgument &arg, Accuracy &accuracy)
+const QDBusArgument& operator>>(const QDBusArgument& arg, Accuracy& accuracy)
 {
     return dbus_argument_helper(arg, accuracy);
 }
 
-const QDBusArgument &operator>>(const QDBusArgument &argument, QGeoSatelliteInfo &si)
+const QDBusArgument& operator>>(const QDBusArgument& argument, QGeoSatelliteInfo& si)
 {
     qint32 a;
 
@@ -89,7 +100,7 @@ const QDBusArgument &operator>>(const QDBusArgument &argument, QGeoSatelliteInfo
     return argument;
 }
 
-const QDBusArgument &operator>>(const QDBusArgument &argument, QList<QGeoSatelliteInfo> &sis)
+const QDBusArgument& operator>>(const QDBusArgument& argument, QList<QGeoSatelliteInfo>& sis)
 {
     sis.clear();
 
@@ -105,3 +116,23 @@ const QDBusArgument &operator>>(const QDBusArgument &argument, QList<QGeoSatelli
 }
 
 QT_END_NAMESPACE
+
+const QDBusArgument &operator<<(QDBusArgument &arg, const QGeoSatelliteInfo &si)
+{
+    arg.beginStructure();
+    arg << si.satelliteIdentifier()
+        << si.attribute(QGeoSatelliteInfo::Azimuth)
+        << si.attribute(QGeoSatelliteInfo::Elevation)
+        << si.signalStrength();
+    arg.endStructure();
+    return arg;
+}
+
+const QDBusArgument &operator<<(QDBusArgument &arg, const QList<QGeoSatelliteInfo> &list)
+{
+    arg.beginArray(qMetaTypeId<QGeoSatelliteInfo>());
+    for (const auto& si : list)
+        arg << si;
+    arg.endArray();
+    return arg;
+}

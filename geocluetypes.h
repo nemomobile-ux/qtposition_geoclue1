@@ -42,9 +42,9 @@
 
 #include <QDBusArgument>
 #include <QGeoSatelliteInfo>
+#include <qdbusmetatype.h>
 
-class Accuracy
-{
+class Accuracy {
 public:
     enum Level {
         None = 0,
@@ -57,7 +57,9 @@ public:
     };
 
     Accuracy()
-    :   m_level(None), m_horizontal(0), m_vertical(0)
+        : m_level(None)
+        , m_horizontal(0)
+        , m_vertical(0)
     {
     }
 
@@ -65,26 +67,28 @@ public:
     inline double horizontal() const { return m_horizontal; }
     inline double vertical() const { return m_vertical; }
 
+    inline void setLevel(Level level) { m_level = level; }
+    inline void setHorizontal(double horizontal) { m_horizontal = horizontal; }
+    inline void setVertical(double vertical) { m_vertical = vertical; }
+
 private:
     Level m_level;
     double m_horizontal;
     double m_vertical;
 
-    friend const QDBusArgument &dbus_argument_helper(const QDBusArgument &arg, Accuracy &accuracy);
+    friend const QDBusArgument& dbus_argument_helper(const QDBusArgument& arg, Accuracy& accuracy);
 };
 
 Q_DECLARE_METATYPE(Accuracy)
 Q_DECLARE_METATYPE(QList<QGeoSatelliteInfo>)
 
-
 Q_DECLARE_TYPEINFO(Accuracy, Q_RELOCATABLE_TYPE);
 
-QDBusArgument &operator<<(QDBusArgument &arg, const Accuracy &accuracy);
-const QDBusArgument &operator>>(const QDBusArgument &arg, Accuracy &accuracy);
+QDBusArgument& operator<<(QDBusArgument& arg, const Accuracy& accuracy);
+const QDBusArgument& operator>>(const QDBusArgument& arg, Accuracy& accuracy);
 
-const QDBusArgument &operator>>(const QDBusArgument &arg, QGeoSatelliteInfo &si);
-const QDBusArgument &operator>>(const QDBusArgument &arg, QList<QGeoSatelliteInfo> &sis);
-
-
+const QDBusArgument& operator>>(const QDBusArgument& arg, QGeoSatelliteInfo& si);
+const QDBusArgument& operator>>(const QDBusArgument& arg, QList<QGeoSatelliteInfo>& sis);
+const QDBusArgument& operator<<(QDBusArgument& arg, const QGeoSatelliteInfo& si);
+const QDBusArgument& operator<<(QDBusArgument& arg, const QList<QGeoSatelliteInfo>& list);
 #endif // GEOCLUETYPES_H
-

@@ -184,6 +184,7 @@ void QGeoPositionInfoSourceGeoclueMaster::velocityUpdateFailed()
 
 void QGeoPositionInfoSourceGeoclueMaster::setError(QGeoPositionInfoSource::Error error)
 {
+    qCDebug(lcPositioningGeoclue) << Q_FUNC_INFO;
     m_error = error;
     if (m_error != QGeoPositionInfoSource::NoError)
         emit errorOccurred(m_error);
@@ -193,6 +194,7 @@ void QGeoPositionInfoSourceGeoclueMaster::updateVelocity(VelocityFields fields, 
                                                          double speed, double direction,
                                                          double climb)
 {
+    qCDebug(lcPositioningGeoclue) << Q_FUNC_INFO;
     Q_UNUSED(timestamp);
 
     // Store the velocity and mark it as fresh. Simple but hopefully adequate.
@@ -220,8 +222,11 @@ void QGeoPositionInfoSourceGeoclueMaster::cleanupPositionSource()
 
 void QGeoPositionInfoSourceGeoclueMaster::setOptions()
 {
-    if (!m_provider)
+    qCDebug(lcPositioningGeoclue) << Q_FUNC_INFO;
+    if (!m_provider) {
+        qWarning() << "NO PROVIDER!!!";
         return;
+    }
 
     QVariantMap options;
     options.insert(QStringLiteral("UpdateInterval"), updateInterval());
@@ -231,12 +236,14 @@ void QGeoPositionInfoSourceGeoclueMaster::setOptions()
 
 void QGeoPositionInfoSourceGeoclueMaster::setUpdateInterval(int msec)
 {
+    qCDebug(lcPositioningGeoclue) << Q_FUNC_INFO;
     QGeoPositionInfoSource::setUpdateInterval(qMax(minimumUpdateInterval(), msec));
     setOptions();
 }
 
 void QGeoPositionInfoSourceGeoclueMaster::setPreferredPositioningMethods(PositioningMethods methods)
 {
+    qCDebug(lcPositioningGeoclue) << Q_FUNC_INFO;
     PositioningMethods previousPreferredPositioningMethods = preferredPositioningMethods();
     QGeoPositionInfoSource::setPreferredPositioningMethods(methods);
     if (previousPreferredPositioningMethods == preferredPositioningMethods())
@@ -265,6 +272,7 @@ void QGeoPositionInfoSourceGeoclueMaster::setPreferredPositioningMethods(Positio
 
 QGeoPositionInfo QGeoPositionInfoSourceGeoclueMaster::lastKnownPosition(bool fromSatellitePositioningMethodsOnly) const
 {
+    qCDebug(lcPositioningGeoclue) << Q_FUNC_INFO;
     if (fromSatellitePositioningMethodsOnly && !m_lastPositionFromSatellite)
         return QGeoPositionInfo();
 
@@ -273,11 +281,13 @@ QGeoPositionInfo QGeoPositionInfoSourceGeoclueMaster::lastKnownPosition(bool fro
 
 QGeoPositionInfoSourceGeoclueMaster::PositioningMethods QGeoPositionInfoSourceGeoclueMaster::supportedPositioningMethods() const
 {
+    qCDebug(lcPositioningGeoclue) << Q_FUNC_INFO;
     return AllPositioningMethods;
 }
 
 void QGeoPositionInfoSourceGeoclueMaster::startUpdates()
 {
+    qCDebug(lcPositioningGeoclue) << Q_FUNC_INFO;
     if (m_running) {
         qCDebug(lcPositioningGeoclue) << "already running.";
         return;
@@ -304,11 +314,13 @@ void QGeoPositionInfoSourceGeoclueMaster::startUpdates()
 
 int QGeoPositionInfoSourceGeoclueMaster::minimumUpdateInterval() const
 {
+    qCDebug(lcPositioningGeoclue) << Q_FUNC_INFO;
     return MINIMUM_UPDATE_INTERVAL;
 }
 
 void QGeoPositionInfoSourceGeoclueMaster::stopUpdates()
 {
+    qCDebug(lcPositioningGeoclue) << Q_FUNC_INFO;
     if (!m_running) {
         qCDebug(lcPositioningGeoclue) << "already stopped.";
         return;
@@ -337,6 +349,7 @@ void QGeoPositionInfoSourceGeoclueMaster::stopUpdates()
 
 void QGeoPositionInfoSourceGeoclueMaster::requestUpdate(int timeout)
 {
+    qCDebug(lcPositioningGeoclue) << Q_FUNC_INFO;
     if (m_requestTimer.isActive()) {
         qCDebug(lcPositioningGeoclue) << "request timer was active, ignoring startUpdates.";
         return;
@@ -372,6 +385,7 @@ void QGeoPositionInfoSourceGeoclueMaster::positionProviderChanged(const QString 
                                                                   const QString &service,
                                                                   const QString &path)
 {
+    qCDebug(lcPositioningGeoclue) << Q_FUNC_INFO;
     Q_UNUSED(name);
     Q_UNUSED(description);
 
@@ -393,8 +407,11 @@ void QGeoPositionInfoSourceGeoclueMaster::positionProviderChanged(const QString 
     m_pos = new OrgFreedesktopGeocluePositionInterface(service, path, QDBusConnection::sessionBus());
 
     if (m_running) {
+        qCDebug(lcPositioningGeoclue) << "RUNNING!";
         connect(m_pos, SIGNAL(PositionChanged(qint32,qint32,double,double,double,Accuracy)),
                 this, SLOT(positionChanged(qint32,qint32,double,double,double,Accuracy)));
+    } else {
+        qCDebug(lcPositioningGeoclue) << "NOT RUNNING!";
     }
 
     // Get the current position immediately.
@@ -414,6 +431,7 @@ void QGeoPositionInfoSourceGeoclueMaster::positionProviderChanged(const QString 
 
 void QGeoPositionInfoSourceGeoclueMaster::requestUpdateTimeout()
 {
+    qCDebug(lcPositioningGeoclue) << Q_FUNC_INFO;
     qCDebug(lcPositioningGeoclue) << "request update timeout occurred.";
 
     // If we end up here, there has not been valid position update.
@@ -428,6 +446,7 @@ void QGeoPositionInfoSourceGeoclueMaster::requestUpdateTimeout()
 
 void QGeoPositionInfoSourceGeoclueMaster::getPositionFinished(QDBusPendingCallWatcher *watcher)
 {
+    qCDebug(lcPositioningGeoclue) << Q_FUNC_INFO;
     QDBusPendingReply<qint32, qint32, double, double, double, Accuracy> reply = *watcher;
     watcher->deleteLater();
 
@@ -450,6 +469,7 @@ void QGeoPositionInfoSourceGeoclueMaster::getPositionFinished(QDBusPendingCallWa
 
 void QGeoPositionInfoSourceGeoclueMaster::positionChanged(qint32 fields, qint32 timestamp, double latitude, double longitude, double altitude, const Accuracy &accuracy)
 {
+    qCDebug(lcPositioningGeoclue) << Q_FUNC_INFO;
     PositionFields pFields = static_cast<PositionFields>(fields);
 
     qCDebug(lcPositioningGeoclue) << "position changed with fields" << fields;
@@ -462,6 +482,7 @@ void QGeoPositionInfoSourceGeoclueMaster::positionChanged(qint32 fields, qint32 
 
 void QGeoPositionInfoSourceGeoclueMaster::velocityChanged(qint32 fields, qint32 timestamp, double speed, double direction, double climb)
 {
+    qCDebug(lcPositioningGeoclue) << Q_FUNC_INFO;
     VelocityFields vFields = static_cast<VelocityFields>(fields);
 
     if (vFields == NoVelocityFields)
@@ -472,6 +493,7 @@ void QGeoPositionInfoSourceGeoclueMaster::velocityChanged(qint32 fields, qint32 
 
 void QGeoPositionInfoSourceGeoclueMaster::configurePositionSource()
 {
+    qCDebug(lcPositioningGeoclue) << Q_FUNC_INFO;
     qCDebug(lcPositioningGeoclue);
 
     bool created = false;
@@ -498,6 +520,7 @@ void QGeoPositionInfoSourceGeoclueMaster::configurePositionSource()
 
 QGeoPositionInfoSource::Error QGeoPositionInfoSourceGeoclueMaster::error() const
 {
+    qCDebug(lcPositioningGeoclue) << Q_FUNC_INFO;
     return m_error;
 }
 

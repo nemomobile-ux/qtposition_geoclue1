@@ -46,15 +46,16 @@
 #include <QtDBus/QDBusPendingCallWatcher>
 
 #define MINIMUM_UPDATE_INTERVAL 1000
-
+Q_DECLARE_LOGGING_CATEGORY(lcPositioningGeoclue)
 QT_BEGIN_NAMESPACE
 
 QGeoSatelliteInfoSourceGeoclueMaster::QGeoSatelliteInfoSourceGeoclueMaster(QObject *parent)
 :   QGeoSatelliteInfoSource(parent), m_master(new QGeoclueMaster(this)), m_provider(0), m_sat(0),
     m_requestTimer(this), m_error(NoError), m_satellitesChangedConnected(false), m_running(false)
 {
-    connect(m_master, SIGNAL(positionProviderChanged(QString,QString,QString,QString)),
-            this, SLOT(positionProviderChanged(QString,QString,QString,QString)));
+    qCDebug(lcPositioningGeoclue) << Q_FUNC_INFO;
+    connect(m_master, &QGeoclueMaster::positionProviderChanged,
+            this, &QGeoSatelliteInfoSourceGeoclueMaster::positionProviderChanged);
 
     m_requestTimer.setSingleShot(true);
     connect(&m_requestTimer, SIGNAL(timeout()), this, SLOT(requestUpdateTimeout()));
@@ -62,11 +63,13 @@ QGeoSatelliteInfoSourceGeoclueMaster::QGeoSatelliteInfoSourceGeoclueMaster(QObje
 
 QGeoSatelliteInfoSourceGeoclueMaster::~QGeoSatelliteInfoSourceGeoclueMaster()
 {
+    qCDebug(lcPositioningGeoclue) << Q_FUNC_INFO;
     cleanupSatelliteSource();
 }
 
 int QGeoSatelliteInfoSourceGeoclueMaster::minimumUpdateInterval() const
 {
+    qCDebug(lcPositioningGeoclue) << Q_FUNC_INFO;
     return MINIMUM_UPDATE_INTERVAL;
 }
 
@@ -80,11 +83,13 @@ void QGeoSatelliteInfoSourceGeoclueMaster::setUpdateInterval(int msec)
 
 QGeoSatelliteInfoSource::Error QGeoSatelliteInfoSourceGeoclueMaster::error() const
 {
+    qCDebug(lcPositioningGeoclue) << Q_FUNC_INFO;
     return m_error;
 }
 
 void QGeoSatelliteInfoSourceGeoclueMaster::startUpdates()
 {
+    qCDebug(lcPositioningGeoclue) << Q_FUNC_INFO;
     if (m_running)
         return;
 
@@ -101,6 +106,7 @@ void QGeoSatelliteInfoSourceGeoclueMaster::startUpdates()
 
 void QGeoSatelliteInfoSourceGeoclueMaster::stopUpdates()
 {
+    qCDebug(lcPositioningGeoclue) << Q_FUNC_INFO;
     if (!m_running)
         return;
 
@@ -120,6 +126,7 @@ void QGeoSatelliteInfoSourceGeoclueMaster::stopUpdates()
 
 void QGeoSatelliteInfoSourceGeoclueMaster::requestUpdate(int timeout)
 {
+    qCDebug(lcPositioningGeoclue) << Q_FUNC_INFO;
     if (m_requestTimer.isActive())
         return;
 
@@ -149,6 +156,7 @@ void QGeoSatelliteInfoSourceGeoclueMaster::updateSatelliteInfo(int timestamp, in
                                                                const QList<int> &usedPrn,
                                                                const QList<QGeoSatelliteInfo> &satInfos)
 {
+    qCDebug(lcPositioningGeoclue) << Q_FUNC_INFO;
     Q_UNUSED(timestamp);
 
     QList<QGeoSatelliteInfo> inUse;
@@ -180,6 +188,7 @@ void QGeoSatelliteInfoSourceGeoclueMaster::updateSatelliteInfo(int timestamp, in
 
 void QGeoSatelliteInfoSourceGeoclueMaster::setError(QGeoSatelliteInfoSource::Error error)
 {
+    qCDebug(lcPositioningGeoclue) << Q_FUNC_INFO;
     m_error = error;
     if (m_error != QGeoSatelliteInfoSource::NoError)
         emit QGeoSatelliteInfoSource::errorOccurred(m_error);
@@ -187,6 +196,7 @@ void QGeoSatelliteInfoSourceGeoclueMaster::setError(QGeoSatelliteInfoSource::Err
 
 void QGeoSatelliteInfoSourceGeoclueMaster::requestUpdateTimeout()
 {
+    qCDebug(lcPositioningGeoclue) << Q_FUNC_INFO;
     // If we end up here, there has not been a valid satellite info update.
     if (m_running) {
         m_inView.clear();
@@ -204,6 +214,7 @@ void QGeoSatelliteInfoSourceGeoclueMaster::requestUpdateTimeout()
 
 void QGeoSatelliteInfoSourceGeoclueMaster::getSatelliteFinished(QDBusPendingCallWatcher *watcher)
 {
+    qCDebug(lcPositioningGeoclue) << Q_FUNC_INFO;
     QDBusPendingReply<qint32, qint32, qint32, QList<qint32>, QList<QGeoSatelliteInfo> > reply = *watcher;
     watcher->deleteLater();
 
@@ -215,7 +226,7 @@ void QGeoSatelliteInfoSourceGeoclueMaster::getSatelliteFinished(QDBusPendingCall
                         reply.argumentAt<3>(), reply.argumentAt<4>());
 }
 
-void QGeoSatelliteInfoSourceGeoclueMaster::satelliteChanged(int timestamp, int satellitesUsed, int satellitesVisible, const QList<int> &usedPrn, const QList<QGeoSatelliteInfo> &satInfos)
+void QGeoSatelliteInfoSourceGeoclueMaster::satelliteChanged(qint32 timestamp, qint32 satellitesUsed, qint32 satellitesVisible, const QList<qint32> &usedPrn, const QList<QGeoSatelliteInfo> &satInfos)
 {
     updateSatelliteInfo(timestamp, satellitesUsed, satellitesVisible, usedPrn, satInfos);
 }
@@ -225,6 +236,7 @@ void QGeoSatelliteInfoSourceGeoclueMaster::positionProviderChanged(const QString
                                                                    const QString &service,
                                                                    const QString &path)
 {
+    qCDebug(lcPositioningGeoclue) << Q_FUNC_INFO;
     Q_UNUSED(name);
     Q_UNUSED(description);
 
@@ -276,6 +288,7 @@ void QGeoSatelliteInfoSourceGeoclueMaster::positionProviderChanged(const QString
 
 void QGeoSatelliteInfoSourceGeoclueMaster::satelliteChanged(const QDBusMessage &message)
 {
+    qCDebug(lcPositioningGeoclue) << Q_FUNC_INFO;
     QVariantList arguments = message.arguments();
     if (arguments.length() != 5)
         return;
@@ -299,12 +312,16 @@ void QGeoSatelliteInfoSourceGeoclueMaster::satelliteChanged(const QDBusMessage &
 
 void QGeoSatelliteInfoSourceGeoclueMaster::configureSatelliteSource()
 {
-    if (!m_master->createMasterClient(Accuracy::Detailed, QGeoclueMaster::ResourceGps))
+    qCDebug(lcPositioningGeoclue) << Q_FUNC_INFO;
+    if (!m_master->createMasterClient(Accuracy::Detailed, QGeoclueMaster::ResourceGps)) {
+        qCDebug(lcPositioningGeoclue) << "Create master client source fail";
         setError(QGeoSatelliteInfoSource::UnknownSourceError);
+    }
 }
 
 void QGeoSatelliteInfoSourceGeoclueMaster::cleanupSatelliteSource()
 {
+    qCDebug(lcPositioningGeoclue) << Q_FUNC_INFO;
     if (m_provider)
         m_provider->RemoveReference();
     delete m_provider;
